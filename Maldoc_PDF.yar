@@ -3,21 +3,19 @@
 
 */
 
-rule malicious_author : PDF raw
+
+rule suspicious_version_2
 {
 	meta:
 		author = "Glenn Edwards (@hiddenillusion)"
 		version = "0.1"
-		weight = 5
+		weight = 3
 		
 	strings:
 		$magic = { 25 50 44 46 }
-		
-		$reg0 = /Creator.?\(yen vaw\)/
-		$reg1 = /Title.?\(who cis\)/
-		$reg2 = /Author.?\(ser pes\)/
+		$ver = /%PDF-1.\d{1}/
 	condition:
-		$magic in (0..1024) and all of ($reg*)
+		$magic in (0..1024) and not $ver
 }
 
 rule suspicious_version : PDF raw
@@ -65,78 +63,6 @@ weight = 3
 
     condition: 
             $magic in (0..1024) and $attrib
-}
-
-rule suspicious_title : PDF raw
-{
-	meta:
-		author = "Glenn Edwards (@hiddenillusion)"
-		version = "0.1"
-		weight = 4
-		
-	strings:
-		$magic = { 25 50 44 46 }
-		$header = /%PDF-1\.(3|4|6)/
-		
-		$title0 = "who cis"
-		$title1 = "P66N7FF"
-		$title2 = "Fohcirya"
-	condition:
-		$magic in (0..1024) and $header and 1 of ($title*)
-}
-
-rule suspicious_author : PDF raw
-{
-	meta:
-		author = "Glenn Edwards (@hiddenillusion)"
-		version = "0.1"
-		weight = 4
-		
-	strings:
-		$magic = { 25 50 44 46 }
-		$header = /%PDF-1\.(3|4|6)/
-
-		$author0 = "Ubzg1QUbzuzgUbRjvcUb14RjUb1"
-		$author1 = "ser pes"
-		$author2 = "Miekiemoes"
-		$author3 = "Nsarkolke"
-	condition:
-		$magic in (0..1024) and $header and 1 of ($author*)
-}
-
-rule suspicious_producer : PDF raw 
-{
-	meta:
-		author = "Glenn Edwards (@hiddenillusion)"
-		version = "0.1"
-		weight = 2
-		
-	strings:
-		$magic = { 25 50 44 46 }
-		$header = /%PDF-1\.(3|4|6)/
-		
-		$producer0 = /Producer \(Scribus PDF Library/
-		$producer1 = "Notepad"
-	condition:
-		$magic in (0..1024) and $header and 1 of ($producer*)
-}
-
-rule suspicious_creator : PDF raw
-{
-	meta:
-		author = "Glenn Edwards (@hiddenillusion)"
-		version = "0.1"
-		weight = 3
-		
-	strings:
-		$magic = { 25 50 44 46 }
-		$header = /%PDF-1\.(3|4|6)/
-		
-		$creator0 = "yen vaw"
-		$creator1 = "Scribus"
-		$creator2 = "Viraciregavi"
-	condition:
-		$magic in (0..1024) and $header and 1 of ($creator*)
 }
 
 rule possible_exploit : PDF raw
@@ -299,40 +225,6 @@ rule invalid_XObject_js : PDF raw
 		$magic in (0..1024) and not $ver and all of ($attrib*)
 }
 
-rule invalid_trailer_structure : PDF raw
-{
-	meta:
-		author = "Glenn Edwards (@hiddenillusion)"
-		version = "0.1"
-		weight = 1
-		
-        strings:
-                $magic = { 25 50 44 46 }
-				// Required for a valid PDF
-                $reg0 = /trailer\r?\n?.*\/Size.*\r?\n?\.*/
-                $reg1 = /\/Root.*\r?\n?.*startxref\r?\n?.*\r?\n?%%EOF/
-
-        condition:
-                $magic in (0..1024) and not $reg0 and not $reg1
-}
-
-rule multiple_versions : PDF raw
-{
-	meta:
-		author = "Glenn Edwards (@hiddenillusion)"
-		version = "0.1"
-        description = "Written very generically and doesn't hold any weight - just something that might be useful to know about to help show incremental updates to the file being analyzed"		
-		weight = 1
-		
-        strings:
-                $magic = { 25 50 44 46 }
-                $s0 = "trailer"
-                $s1 = "%%EOF"
-
-        condition:
-                $magic in (0..1024) and #s0 > 1 and #s1 > 1
-}
-
 rule js_wrong_version : PDF raw
 {
 	meta:
@@ -403,23 +295,6 @@ rule embed_wrong_version : PDF raw
 
         condition:
                 $magic in (0..1024) and $embed and not $ver
-}
-
-rule invalid_xref_numbers : PDF raw
-{
-        meta:
-			author = "Glenn Edwards (@hiddenillusion)"
-			version = "0.1"
-			description = "The first entry in a cross-reference table is always free and has a generation number of 65,535"
-			notes = "This can be also be in a stream..."
-			weight = 1
-		
-        strings:
-                $magic = { 25 50 44 46 }
-                $reg0 = /xref\r?\n?.*\r?\n?.*65535\sf/
-                $reg1 = /endstream.*\r?\n?endobj.*\r?\n?startxref/
-        condition:
-                $magic in (0..1024) and not $reg0 and not $reg1
 }
 
 rule js_splitting : PDF raw
